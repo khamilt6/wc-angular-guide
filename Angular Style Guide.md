@@ -303,7 +303,7 @@ import { Pet } from './pet';
 })
 export class PetComponent implements OnInit {
 
-  somePetR: Observable<Pet>;
+  somePet$: Observable<Pet>;
 
   constructor(private store: Store<AppState>) { }
 
