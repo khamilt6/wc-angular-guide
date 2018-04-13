@@ -51,6 +51,15 @@ Follow the instructions at [https://www.npmjs.com/get-npm](https://www.npmjs.com
 
 Download and install [Redux Dev Tools for Chrome](https://chrome.google.com/webstore/detail/redux-devtools/lmhkpmbekcpmknklioeibfkpmmfibljd?hl=en)
 
+**(Recommended) Angular CLI**
+
+Angular CLI is a pretty useful tool for generated components, services, etc. 
+
+To install it as a global npm package, run:
+```cmd
+npm install -g @angular/cli
+```
+
 ----- 
 
 ## 3 - Getting Started
@@ -65,16 +74,26 @@ AHT.Core.UI is where we're keeping the Angular app in order to keep it separate 
 
 **Building AHT.Core.UI Angular Application**
 
+Ensure that node and npm installed and up to date. 
+```cmd
+node -v
+npm -v
+```
+
  `package.json` in AHT.Core.UI contains the names and versions for the packages that the Angular app has depends on. For initial set up, and when new dependencies are added, you'll need to install the packages in order to build the app. Dependencies that are installed from npm are placed into the `node_modules` folder. **Don't check this folder in.** 
 
-```
+```cmd
 npm install
 ```
 
 `package.json` also contains the scripts used to build the application. After dependencies are installed, you're ready to build and start the application.
-```
+```cmd
 npm run build
 ```
+
+Ensure that you have a typescript linter for your chosen IDE or text editor. Most linters will find the nearest `tslint.json` file, but if not edit your linter settings to point to `tslint.json` at the root of AHT.Core.UI.
+
+
 The startup projects for running the application are `AHT.Services` and `AHT.UI`.
 
 **Committing Changes via Source Explorer in Visual Studio (NOT Visual Studio Code)**
@@ -305,4 +324,74 @@ export class PetComponent implements OnInit {
 
 ## 6 - Angular Services vs API Services
 
-## 7 - Style Guide
+## 7 - Angular NgModule
+
+Angular modules specify what components will be part of the module, other modules to import into the module, services that will be available for Angular's dependency injection, and components that will be available to other modules that import it.
+
+Modules will be used for specific features in our application such as Faxing or Messaging. A general rule of thumb is to consolidate components, services, and utilities that are specific to features or business domains of our application into a module, although it's a good idea to place shared functionality into a shared module as well. 
+
+The imports array will contain all other modules that a certain module depends on to function. 
+```typescript
+imports: [
+        CommonModule,
+        StoreModule.forFeature('messagingFramework', reducer),
+        EffectsModule.forFeature([MessagingFrameworkEffects]),
+        HttpClientModule,
+        ComponentsModule,
+        BrowserModule
+    ],
+``` 
+
+The declarations contains components that are used in the module, and the exports array contains components that the module will expose to other modules for use.
+```typescript
+declarations: [MessagingFrameworkContainerComponent, TestComponent],
+exports: [MessagingFrameworkContainerComponent],
+// the root component of the module should be exported in order to allow an entry point for the module to be used within other modules, or the root AppModule
+```
+The providers array is a list of injectable services that can be injected into components or other services at runtime.
+```typescript
+providers: [
+        MessagingFrameworkService,
+        MessagingHubService,
+    ]
+```
+All put together, the module should look something like this.
+```typescript
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { StoreModule } from '@ngrx/store';
+import { reducer } from './store/reducer';
+import { MessagingFrameworkContainerComponent } from './messaging-framework-container/messaging-framework-container.component';
+import { HttpClientModule } from '@angular/common/http';
+import { MessagingFrameworkService, SignalrWindow } from './store/messaging-framework.service';
+import { EffectsModule } from '@ngrx/effects';
+import { MessagingFrameworkEffects } from './store/effects';
+import { ComponentsModule } from '../../shared/components/components.module';
+import { MessagingHubService } from './messaging-hub.service';
+import { BrowserModule } from '@angular/platform-browser';
+import { TestComponent } from './test/test.component';
+
+@NgModule({
+    imports: [
+        CommonModule,
+        StoreModule.forFeature('messagingFramework', reducer),
+        EffectsModule.forFeature([MessagingFrameworkEffects]),
+        HttpClientModule,
+        ComponentsModule,
+        BrowserModule
+    ],
+    declarations: [MessagingFrameworkContainerComponent, TestComponent],
+    exports: [MessagingFrameworkContainerComponent],
+    providers: [
+        MessagingFrameworkService,
+        MessagingHubService,
+    ]
+})
+export class MessagingFrameworkModule {
+}
+
+```
+
+Ngrx allows us to have a specific store for feature modules. If we set up the store within a module, it's lazily loaded and will wait for the module to enter scope before its state is added to the root state and its effects are registered. It will still be part of the single application state, but the code and implementation is encapsulated within the feature module that it's used. 
+
+## 8 - Style Guide
